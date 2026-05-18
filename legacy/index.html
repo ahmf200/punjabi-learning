@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Punjabi Seekho</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green:#1a6b3c;--green-light:#2d9b5a;--green-pale:#e8f5ee;
+  --gold:#c9a84c;--gold-pale:#fdf6e3;
+  --white:#fafaf8;--dark:#1a1a18;--mid:#4a4a45;--light:#9a9990;
+  --red:#c0392b;--red-pale:#fdf0ee;
+  --radius:16px;--shadow:0 4px 24px rgba(26,107,60,0.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--dark);min-height:100vh;}
+
+header{background:var(--green);color:white;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(26,107,60,0.25);}
+.logo{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:900;flex-shrink:0;}
+.logo span{color:var(--gold);}
+.nav-tabs{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end;}
+.nav-tab{background:rgba(255,255,255,0.12);border:none;color:rgba(255,255,255,0.85);padding:6px 10px;border-radius:7px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.75rem;font-weight:500;transition:all 0.2s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.nav-tab.active,.nav-tab:hover{background:var(--gold);color:var(--dark);}
+
+main{max-width:860px;margin:0 auto;padding:20px 15px 80px;}
+.section{display:none;}
+.section.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h2{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--green);margin-bottom:4px;}
+.subtitle{color:var(--light);font-size:0.86rem;margin-bottom:18px;}
+
+/* VOICE SETTINGS */
+.voice-settings-bar{display:flex;align-items:center;gap:9px;padding:9px 13px;background:var(--gold-pale);border:1.5px solid #e8d8a0;border-radius:12px;margin-bottom:16px;font-size:0.8rem;color:var(--mid);flex-wrap:wrap;}
+.voice-settings-bar select{padding:4px 8px;border-radius:8px;border:1.5px solid #d8c880;background:white;font-family:'DM Sans',sans-serif;font-size:0.78rem;color:var(--dark);cursor:pointer;max-width:190px;}
+.voice-settings-bar label{font-weight:500;color:var(--dark);}
+
+/* SPEAK BTN */
+.speak-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:999px;border:1.5px solid var(--green-light);background:transparent;color:var(--green);font-family:'DM Sans',sans-serif;font-size:0.72rem;font-weight:500;cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.speak-btn:hover,.speak-btn:active{background:var(--green-pale);}
+.speak-btn.speaking{background:var(--green);color:white;border-color:var(--green);}
+.speak-btn svg{width:12px;height:12px;fill:currentColor;flex-shrink:0;}
+
+/* MIC BTN */
+.mic-btn{display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:999px;border:2px solid #e0e3dc;background:white;color:var(--mid);font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;cursor:pointer;transition:all 0.18s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.mic-btn:hover,.mic-btn:active{border-color:var(--green-light);color:var(--green);}
+.mic-btn.listening{border-color:var(--red);color:var(--red);background:var(--red-pale);animation:pulseMic 0.7s ease infinite alternate;}
+@keyframes pulseMic{from{box-shadow:0 0 0 0 rgba(192,57,43,0.35)}to{box-shadow:0 0 0 10px rgba(192,57,43,0)}}
+.mic-btn svg{width:15px;height:15px;fill:currentColor;}
+.mic-transcript{font-size:0.82rem;color:var(--mid);font-style:italic;min-height:16px;margin-top:5px;text-align:center;}
+
+/* VOCAB */
+.vocab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:11px;margin-bottom:26px;}
+.vocab-card{background:white;border:1.5px solid #e8ebe6;border-radius:var(--radius);padding:13px 14px 10px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.vocab-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--green-light);border-radius:4px 0 0 4px;}
+.vocab-card .english{font-size:0.7rem;color:var(--light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;}
+.vocab-card .punjabi{font-size:1rem;font-weight:500;color:var(--dark);margin-bottom:7px;}
+
+/* FILTER */
+.filter-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.filter-btn{padding:5px 12px;border-radius:999px;border:1.5px solid #d8dbd5;background:white;font-family:'DM Sans',sans-serif;font-size:0.76rem;cursor:pointer;transition:all 0.15s;color:var(--mid);-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.filter-btn.active,.filter-btn:hover{background:var(--green);color:white;border-color:var(--green);}
+
+/* PRONOUN GRID */
+.pronoun-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px;margin:12px 0 20px;}
+.pronoun-card{background:white;border:1.5px solid #e8ebe6;border-radius:12px;padding:11px;}
+.pronoun-card .en{font-size:0.68rem;color:var(--light);text-transform:uppercase;letter-spacing:0.05em;}
+.pronoun-card .pun{font-size:0.95rem;font-weight:600;color:var(--dark);}
+
+/* VERB TABLE */
+.verb-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:0.78rem;}
+.verb-table th{background:var(--green);color:white;padding:8px 11px;text-align:left;font-weight:500;}
+.verb-table td{padding:7px 11px;border-bottom:1px solid #f0f2ee;vertical-align:top;}
+.verb-table tr:nth-child(even) td{background:var(--green-pale);}
+
+/* LESSONS */
+.lesson-list{display:flex;flex-direction:column;gap:12px;margin-bottom:24px;}
+.lesson-panel{background:white;border:1.5px solid #e8ebe6;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+.lesson-header{display:flex;align-items:center;gap:11px;padding:13px 16px;cursor:pointer;user-select:none;transition:background 0.15s;-webkit-tap-highlight-color:transparent;}
+.lesson-header:hover,.lesson-header:active{background:var(--green-pale);}
+.lesson-num{background:var(--green);color:white;width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;flex-shrink:0;}
+.lesson-title{font-weight:500;flex:1;font-size:0.88rem;}
+.lesson-chevron{color:var(--light);transition:transform 0.2s;font-size:1rem;}
+.lesson-panel.open .lesson-chevron{transform:rotate(180deg);}
+.lesson-body{display:none;padding:0 16px 16px;border-top:1.5px solid #e8ebe6;}
+.lesson-panel.open .lesson-body{display:block;}
+.sentence-row{display:flex;flex-direction:column;gap:2px;padding:9px 0;border-bottom:1px solid #f0f2ee;}
+.sentence-row:last-child{border-bottom:none;}
+.sentence-en{font-size:0.8rem;color:var(--light);}
+.sentence-pun{font-size:0.92rem;color:var(--dark);font-weight:500;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.rule-box{background:var(--green-pale);border-left:4px solid var(--green-light);border-radius:0 10px 10px 0;padding:10px 13px;margin:10px 0;font-size:0.85rem;line-height:1.6;}
+.rule-box strong{color:var(--green);}
+.rule-tag{display:inline-block;background:var(--gold);color:var(--dark);font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:2px 6px;border-radius:4px;margin-bottom:5px;}
+
+/* PASSAGE BLOCK */
+.passage-block{background:linear-gradient(135deg,#f0f9f4,#fdf6e3);border:1.5px solid #c8e6d4;border-radius:14px;padding:16px 18px;margin:14px 0;position:relative;}
+.passage-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--green);margin-bottom:10px;}
+.passage-en{font-size:0.88rem;color:var(--mid);line-height:1.7;margin-bottom:10px;font-style:italic;}
+.passage-divider{height:1.5px;background:linear-gradient(90deg,var(--green-light),transparent);margin-bottom:10px;border-radius:999px;}
+.passage-pun{font-size:0.95rem;color:var(--dark);font-weight:500;line-height:1.75;display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+
+/* QUIZ */
+#quiz-progress{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.progress-bar{flex:1;height:5px;background:#e8ebe6;border-radius:999px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--green-light));border-radius:999px;transition:width 0.4s cubic-bezier(.4,0,.2,1);}
+.progress-text{font-size:0.8rem;color:var(--light);white-space:nowrap;}
+.quiz-card{background:white;border:1.5px solid #e8ebe6;border-radius:20px;padding:26px 20px;box-shadow:0 8px 40px rgba(26,107,60,0.10);text-align:center;min-height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;position:relative;}
+.quiz-type-badge{position:absolute;top:14px;right:14px;font-size:0.66rem;color:var(--light);text-transform:uppercase;letter-spacing:0.08em;}
+.quiz-prompt{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--dark);line-height:1.3;max-width:480px;}
+.quiz-sub{font-size:0.8rem;color:var(--light);}
+.quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:500px;margin-top:4px;}
+.quiz-option{background:var(--green-pale);border:2px solid transparent;border-radius:11px;padding:11px 12px;font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;transition:all 0.18s;text-align:left;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.quiz-option:hover:not(:disabled),.quiz-option:active:not(:disabled){border-color:var(--green-light);background:white;}
+.quiz-option.correct{border-color:var(--green);background:var(--green-pale);color:var(--green);}
+.quiz-option.wrong{border-color:var(--red);background:var(--red-pale);color:var(--red);}
+.quiz-type-input{display:flex;flex-direction:column;align-items:center;gap:9px;width:100%;max-width:400px;}
+.quiz-input{width:100%;padding:11px 14px;font-size:0.95rem;font-family:'DM Sans',sans-serif;border:2px solid #e0e3dc;border-radius:12px;outline:none;transition:border-color 0.2s;text-align:center;}
+.quiz-input:focus{border-color:var(--green-light);}
+.quiz-input.correct{border-color:var(--green);background:var(--green-pale);color:var(--green);}
+.quiz-input.wrong{border-color:var(--red);background:var(--red-pale);}
+.quiz-feedback{font-size:0.92rem;font-weight:600;padding:6px 16px;border-radius:8px;}
+.quiz-feedback.correct{background:var(--green-pale);color:var(--green);}
+.quiz-feedback.wrong{background:var(--red-pale);color:var(--red);}
+.quiz-answer-reveal{font-size:0.85rem;color:var(--mid);margin-top:2px;}
+.quiz-controls{display:flex;justify-content:center;gap:9px;margin-top:16px;}
+.score-card{background:white;border:1.5px solid #e8ebe6;border-radius:20px;padding:36px 24px;text-align:center;box-shadow:var(--shadow);}
+.score-big{font-family:'Playfair Display',serif;font-size:3.2rem;font-weight:900;color:var(--green);line-height:1;}
+.score-label{color:var(--light);margin-top:4px;margin-bottom:18px;}
+.score-stars{font-size:1.8rem;margin-bottom:8px;}
+
+/* BUTTONS */
+.btn{padding:10px 20px;border-radius:10px;border:none;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.86rem;cursor:pointer;transition:all 0.18s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.btn-green{background:var(--green);color:white;}
+.btn-green:hover,.btn-green:active{background:var(--green-light);}
+.btn-outline{background:transparent;color:var(--green);border:2px solid var(--green);}
+.btn-outline:hover,.btn-outline:active{background:var(--green-pale);}
+
+/* TRANSLATE */
+.translate-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:9px;}
+.translate-progress-bar{flex:1;height:5px;background:#e8ebe6;border-radius:999px;overflow:hidden;}
+.translate-progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--green-light));border-radius:999px;transition:width 0.4s;}
+.translate-pnum{font-size:0.78rem;color:var(--light);white-space:nowrap;}
+.translate-card{background:white;border:1.5px solid #e8ebe6;border-radius:18px;padding:24px 20px;box-shadow:var(--shadow);margin-bottom:16px;transition:border-color 0.3s;}
+.translate-counter{font-size:0.72rem;color:var(--light);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:7px;}
+.translate-prompt{font-family:'Playfair Display',serif;font-size:1.45rem;color:var(--dark);margin-bottom:4px;line-height:1.25;}
+.translate-hint{font-size:0.78rem;color:var(--light);margin-bottom:13px;}
+.translate-textarea{width:100%;min-height:76px;padding:11px 13px;font-size:0.95rem;font-family:'DM Sans',sans-serif;border:2px solid #e0e3dc;border-radius:12px;outline:none;resize:vertical;transition:border-color 0.2s;line-height:1.5;}
+.translate-textarea:focus{border-color:var(--green-light);}
+.translate-textarea:disabled{background:#fafafa;color:var(--mid);}
+.translate-answer-box{margin-top:11px;background:var(--green-pale);border-left:4px solid var(--green-light);border-radius:0 10px 10px 0;padding:11px 14px;display:none;}
+.translate-answer-box.show{display:block;}
+.translate-answer-label{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--green);font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.translate-answer-text{font-size:0.98rem;font-weight:600;color:var(--dark);}
+.translate-self-mark{display:none;gap:9px;margin-top:11px;align-items:center;flex-wrap:wrap;}
+.translate-self-mark.show{display:flex;}
+.translate-self-label{font-size:0.82rem;color:var(--mid);}
+.mark-btn{padding:6px 13px;border-radius:8px;border:2px solid transparent;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.78rem;cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.mark-btn.got-it{border-color:var(--green);color:var(--green);background:transparent;}
+.mark-btn.got-it:active,.mark-btn.got-it.selected{background:var(--green);color:white;}
+.mark-btn.missed{border-color:var(--red);color:var(--red);background:transparent;}
+.mark-btn.missed:active,.mark-btn.missed.selected{background:var(--red);color:white;}
+.translate-row-btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;}
+.translate-summary{background:white;border:1.5px solid #e8ebe6;border-radius:18px;padding:32px 22px;text-align:center;box-shadow:var(--shadow);display:none;}
+.translate-summary.show{display:block;}
+.translate-tally{display:flex;justify-content:center;gap:26px;margin:16px 0;}
+.tally-item{text-align:center;}
+.tally-num{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:900;line-height:1;}
+.tally-num.green{color:var(--green);}.tally-num.red{color:var(--red);}
+.tally-lbl{font-size:0.72rem;color:var(--light);text-transform:uppercase;letter-spacing:0.06em;}
+
+/* NOTES */
+.notes-toolbar{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap;}
+.notes-tab-btn{padding:6px 13px;border-radius:999px;border:1.5px solid #d8dbd5;background:white;font-family:'DM Sans',sans-serif;font-size:0.78rem;cursor:pointer;color:var(--mid);transition:all 0.15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.notes-tab-btn.active{background:var(--green);color:white;border-color:var(--green);}
+.note-area{width:100%;min-height:260px;padding:15px;font-family:'DM Sans',sans-serif;font-size:0.95rem;border:2px solid #e0e3dc;border-radius:14px;outline:none;resize:vertical;line-height:1.75;transition:border-color 0.2s;background:white;color:var(--dark);}
+.note-area:focus{border-color:var(--green-light);}
+.notes-meta{display:flex;align-items:center;justify-content:space-between;margin-top:7px;flex-wrap:wrap;gap:6px;}
+.notes-hint{font-size:0.75rem;color:var(--light);}
+.notes-saved-badge{font-size:0.75rem;color:var(--green);opacity:0;transition:opacity 0.4s;}
+.notes-saved-badge.show{opacity:1;}
+.notes-quick-phrases{margin-top:22px;}
+.notes-quick-phrases h3{font-size:0.95rem;font-weight:600;color:var(--mid);margin-bottom:9px;}
+.phrase-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.phrase-chip{padding:5px 11px;background:var(--green-pale);border:1px solid #c5e0d0;border-radius:999px;font-size:0.78rem;cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.phrase-chip:hover,.phrase-chip:active{background:var(--green);color:white;}
+
+@media(max-width:540px){
+  .nav-tab{padding:5px 7px;font-size:0.7rem;}
+  .quiz-options{grid-template-columns:1fr;}
+  .quiz-prompt{font-size:1.2rem;}
+  .vocab-grid{grid-template-columns:1fr 1fr;}
+  .translate-prompt{font-size:1.2rem;}
+  h2{font-size:1.3rem;}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Punjabi <span>Seekho</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showSection('vocab')">Vocab</button>
+    <button class="nav-tab" onclick="showSection('lessons')">Lessons</button>
+    <button class="nav-tab" onclick="showSection('quiz')">Quiz</button>
+    <button class="nav-tab" onclick="showSection('translate')">Translate</button>
+    <button class="nav-tab" onclick="showSection('notes')">Notes</button>
+  </div>
+</header>
+<main>
+
+<!-- VOCAB -->
+<div id="vocab" class="section active">
+  <h2>Vocabulary</h2>
+  <p class="subtitle">Tap 🔊 on any word to hear it read aloud</p>
+  <div class="voice-settings-bar">
+    <label>🔊 Voice:</label>
+    <select id="voice-select" onchange="saveVoicePref()"><option>Loading…</option></select>
+    <label>Speed:</label>
+    <select id="rate-select" onchange="saveVoicePref()">
+      <option value="0.6">Slow</option>
+      <option value="0.82" selected>Normal</option>
+      <option value="1.0">Fast</option>
+    </select>
+  </div>
+  <div class="filter-row">
+    <button class="filter-btn active" onclick="filterVocab('all',this)">All</button>
+    <button class="filter-btn" onclick="filterVocab('pronouns',this)">Pronouns</button>
+    <button class="filter-btn" onclick="filterVocab('family',this)">Family</button>
+    <button class="filter-btn" onclick="filterVocab('verbs',this)">Verbs</button>
+    <button class="filter-btn" onclick="filterVocab('food',this)">Food & Meals</button>
+    <button class="filter-btn" onclick="filterVocab('general',this)">General</button>
+  </div>
+  <div class="vocab-grid" id="vocab-grid"></div>
+
+  <h2 style="margin-top:4px;">Possessives: "My"</h2>
+  <p class="subtitle">Changes based on gender &amp; number of the noun</p>
+  <div class="pronoun-grid">
+    <div class="pronoun-card"><div class="en">My (M, Singular)</div><div class="pun">Mera</div></div>
+    <div class="pronoun-card"><div class="en">My (F, Singular)</div><div class="pun">Meri</div></div>
+    <div class="pronoun-card"><div class="en">My (M, Plural)</div><div class="pun">Meray</div></div>
+    <div class="pronoun-card"><div class="en">My (F, Plural)</div><div class="pun">Meriyyan</div></div>
+    <div class="pronoun-card"><div class="en">His/Her (M, Sing)</div><div class="pun">Oda</div></div>
+    <div class="pronoun-card"><div class="en">His/Her (F, Sing)</div><div class="pun">Odi</div></div>
+    <div class="pronoun-card"><div class="en">His/Her (Plural)</div><div class="pun">Oday</div></div>
+    <div class="pronoun-card"><div class="en">His/Her (Formal)</div><div class="pun">Onada</div></div>
+  </div>
+
+  <h2>Verb Conjugation</h2>
+  <p class="subtitle">Root → Present Simple → Present Continuous → Future</p>
+  <div style="overflow-x:auto;">
+    <table class="verb-table">
+      <thead><tr><th>English</th><th>Root</th><th>Present (He/She)</th><th>Continuous (He)</th><th>Future (He)</th></tr></thead>
+      <tbody id="verb-table-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- LESSONS -->
+<div id="lessons" class="section">
+  <h2>Your Lessons</h2>
+  <p class="subtitle">Tap a lesson to expand — press 🔊 to hear any sentence</p>
+  <div class="lesson-list" id="lesson-list"></div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="section">
+  <h2>Test Yourself</h2>
+  <p class="subtitle">Multiple choice &amp; translation — with speaking support</p>
+  <div class="filter-row" style="margin-bottom:12px;">
+    <button class="filter-btn active" id="qmode-mcq" onclick="setQuizMode('mcq',this)">Multiple Choice</button>
+    <button class="filter-btn" id="qmode-type" onclick="setQuizMode('type',this)">Translate It</button>
+  </div>
+  <div id="quiz-progress">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-text" id="progress-text">0 / 0</div>
+  </div>
+  <div id="quiz-area"></div>
+  <div class="quiz-controls" id="quiz-controls" style="display:none">
+    <button class="btn btn-outline" onclick="skipQuestion()">Skip</button>
+    <button class="btn btn-green" id="next-btn" onclick="nextQuestion()">Next →</button>
+  </div>
+</div>
+
+<!-- TRANSLATE -->
+<div id="translate" class="section">
+  <h2>Translate Test</h2>
+  <p class="subtitle">Write or speak the Punjabi — reveal &amp; self-mark how you did</p>
+  <div class="translate-nav-row">
+    <div class="translate-progress-bar"><div class="translate-progress-fill" id="t-progress-fill" style="width:0%"></div></div>
+    <div class="translate-pnum" id="t-progress-text">0 / 0</div>
+    <button class="btn btn-outline" onclick="shuffleTranslate()" style="padding:5px 11px;font-size:0.76rem;">🔀 Shuffle</button>
+  </div>
+  <div id="translate-cards"></div>
+  <div class="translate-summary" id="translate-summary">
+    <div style="font-size:1.8rem;margin-bottom:5px;">🎉</div>
+    <h2 style="margin-bottom:4px;">Session Complete!</h2>
+    <p class="subtitle" style="margin-bottom:0">Here's how you did:</p>
+    <div class="translate-tally">
+      <div class="tally-item"><div class="tally-num green" id="tally-got">0</div><div class="tally-lbl">Got it</div></div>
+      <div class="tally-item"><div class="tally-num red" id="tally-missed">0</div><div class="tally-lbl">Missed</div></div>
+      <div class="tally-item"><div class="tally-num" id="tally-skip" style="color:var(--light)">0</div><div class="tally-lbl">Skipped</div></div>
+    </div>
+    <div style="display:flex;gap:9px;justify-content:center;margin-top:4px;">
+      <button class="btn btn-green" onclick="restartTranslate()">Go Again</button>
+      <button class="btn btn-outline" onclick="showSection('lessons')">Review Lessons</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTES -->
+<div id="notes" class="section">
+  <h2>My Notes</h2>
+  <p class="subtitle">Personal study notes — auto-saved to this device as you type</p>
+  <div class="notes-toolbar" id="notes-toolbar"></div>
+  <textarea class="note-area" id="note-area" placeholder="Write your notes, rules, vocab, anything…" oninput="saveNote()"></textarea>
+  <div class="notes-meta">
+    <span class="notes-hint">💾 Auto-saved to your device</span>
+    <span class="notes-saved-badge" id="saved-badge">✓ Saved</span>
+  </div>
+  <div class="notes-quick-phrases">
+    <h3>Quick Insert — tap a phrase to add it to your notes</h3>
+    <div class="phrase-chips" id="phrase-chips"></div>
+  </div>
+</div>
+
+</main>
+<script>
+// ===== DATA =====
+const vocab=[
+  {en:"I",pun:"Mein",cat:"pronouns"},{en:"He / She",pun:"Oh",cat:"pronouns"},{en:"They",pun:"Oh",cat:"pronouns"},
+  {en:"We",pun:"Asi",cat:"pronouns"},{en:"You (informal)",pun:"Tu",cat:"pronouns"},{en:"You (formal)",pun:"Tusi",cat:"pronouns"},
+  {en:"To you (informal)",pun:"Tenu",cat:"pronouns"},{en:"To you (formal)",pun:"Tuhanu",cat:"pronouns"},{en:"To me",pun:"Menu",cat:"pronouns"},
+  {en:"This",pun:"Aa",cat:"pronouns"},{en:"That",pun:"Oo",cat:"pronouns"},{en:"These",pun:"Aa (plural)",cat:"pronouns"},{en:"Those",pun:"Oo (plural)",cat:"pronouns"},
+  {en:"Husband",pun:"Shohar",cat:"family"},{en:"Wife",pun:"Biwi",cat:"family"},{en:"Brother",pun:"Pra",cat:"family"},
+  {en:"Sister",pun:"Pan",cat:"family"},{en:"Dad",pun:"Abu",cat:"family"},{en:"Mom",pun:"Ami",cat:"family"},
+  {en:"Friend",pun:"Dost",cat:"family"},{en:"Relatives",pun:"Rishtaydar",cat:"family"},{en:"Baby / Child",pun:"Bacha",cat:"family"},
+  {en:"To eat",pun:"Khana",cat:"verbs"},{en:"To drink",pun:"Peena",cat:"verbs"},{en:"To read",pun:"Parrna",cat:"verbs"},
+  {en:"To write",pun:"Likhna",cat:"verbs"},{en:"To go",pun:"Jana",cat:"verbs"},{en:"To do",pun:"Krna",cat:"verbs"},
+  {en:"To talk",pun:"Gal krna",cat:"verbs"},{en:"To come",pun:"Aana",cat:"verbs"},{en:"To live",pun:"Renda aa",cat:"verbs"},
+  {en:"To cook",pun:"Pakana",cat:"verbs"},{en:"To watch",pun:"Dekhna",cat:"verbs"},{en:"To buy",pun:"Kharedna",cat:"verbs"},
+  {en:"To laugh",pun:"Hassna",cat:"verbs"},{en:"To cry",pun:"Rona",cat:"verbs"},{en:"To sleep",pun:"Sona",cat:"verbs"},{en:"To like",pun:"Passand krna",cat:"verbs"},
+  {en:"Tea",pun:"Chae",cat:"food"},{en:"Water",pun:"Pani",cat:"food"},{en:"Rice",pun:"Chawal",cat:"food"},
+  {en:"Meat",pun:"Gosht",cat:"food"},{en:"Vegetables",pun:"Sabzi",cat:"food"},{en:"Breakfast",pun:"Nashta",cat:"food"},
+  {en:"Lunch",pun:"Dupaher da khana",cat:"food"},{en:"Dinner",pun:"Raat da khana",cat:"food"},{en:"Spicy food",pun:"Mirch ala khana",cat:"food"},
+  {en:"Book",pun:"Kittab",cat:"general"},{en:"Daily",pun:"Har roz",cat:"general"},{en:"Younger",pun:"Nikka / Chotta",cat:"general"},
+  {en:"Older",pun:"Wadda",cat:"general"},{en:"Old",pun:"Purana",cat:"general"},{en:"New",pun:"Nava / Navi",cat:"general"},
+  {en:"Outside",pun:"Bar",cat:"general"},{en:"Now",pun:"Hun",cat:"general"},{en:"Today",pun:"Aj",cat:"general"},
+  {en:"Early",pun:"Jldi",cat:"general"},{en:"Later",pun:"Baad vich",cat:"general"},{en:"Only / Just",pun:"Siraf",cat:"general"},
+  {en:"Together",pun:"Mil k",cat:"general"},{en:"But",pun:"Lakin",cat:"general"},{en:"And",pun:"Ty",cat:"general"},
+  {en:"For",pun:"Lae",cat:"general"},{en:"In / Inside",pun:"Vich",cat:"general"},{en:"With",pun:"Nal",cat:"general"},
+  {en:"Money",pun:"Passay",cat:"general"},{en:"Car",pun:"Gadi",cat:"general"},{en:"House",pun:"Ghar",cat:"general"},
+  {en:"Watch (wristwatch)",pun:"Karri",cat:"general"},{en:"Newspaper",pun:"Ikhbar",cat:"general"},{en:"Poetry",pun:"Shaeri",cat:"general"},
+  {en:"Morning",pun:"Subha",cat:"general"},{en:"Next month",pun:"Aglay mahenay",cat:"general"},{en:"Room",pun:"Kamra",cat:"general"},
+  {en:"Name",pun:"Naa",cat:"general"},{en:"Happy",pun:"Koosh",cat:"general"},{en:"'s / of",pun:"Da / Di / Day / Diyyan",cat:"general"},
+  // Lesson 7 — Daily Routine
+  {en:"To wake up",pun:"Uthna / Othda aa",cat:"verbs"},{en:"To brush teeth",pun:"Dand saaf krna",cat:"verbs"},
+  {en:"To take a shower",pun:"Nanda",cat:"verbs"},{en:"To work",pun:"Kam krna",cat:"verbs"},
+  {en:"To come back / return",pun:"Wapas aana",cat:"verbs"},{en:"To love",pun:"Pyaar krna / Muhabat krna",cat:"verbs"},
+  {en:"Teeth",pun:"Dand (M+P)",cat:"general"},{en:"Night",pun:"Raat (F)",cat:"general"},
+  {en:"Day",pun:"Den (M)",cat:"general"},{en:"Noon",pun:"Dupar (F)",cat:"general"},
+  {en:"Evening",pun:"Sham",cat:"general"},{en:"Love (noun)",pun:"Pyaar (M)",cat:"general"},
+  {en:"Clock / O'clock",pun:"Wajay / Bajay",cat:"general"},{en:"Back / Return",pun:"Wapas",cat:"general"},
+  {en:"After that",pun:"Oday baad / Ostw baad",cat:"general"},{en:"Then / After",pun:"Faer / Phir",cat:"general"},
+  {en:"Work (noun)",pun:"Kam",cat:"general"},{en:"Hard work",pun:"Mehnat",cat:"general"},
+  {en:"One",pun:"Aik",cat:"general"},{en:"Two",pun:"Do",cat:"general"},{en:"Three",pun:"Teen",cat:"general"},
+  {en:"Four",pun:"Char",cat:"general"},{en:"Five",pun:"Panj",cat:"general"},{en:"Six",pun:"Chay",cat:"general"},
+  {en:"Seven",pun:"Sat",cat:"general"},{en:"Eight",pun:"Ath",cat:"general"},{en:"Nine",pun:"No",cat:"general"},
+  {en:"Ten",pun:"Das",cat:"general"},{en:"Eleven",pun:"Gyara",cat:"general"},{en:"Twelve",pun:"Bara",cat:"general"},
+  {en:"When?",pun:"Kido?",cat:"general"},{en:"At what time?",pun:"Kinnay wajay?",cat:"general"},
+];
+
+const verbData=[
+  {en:"eat",root:"Khana / Kha",present:"Khanda (M) / Khandi (F) / Khanday (MP)",cont:"Kha rya (M) / Kha rae (F)",future:"Khaun ga (I) / Khaa ga (He)"},
+  {en:"drink",root:"Peena / Pee",present:"Peenda / Peendi / Peenday",cont:"Pee rya / Pee rae",future:"Peun ga (I) / Pee a ga (He)"},
+  {en:"read",root:"Parrna / Prr",present:"Parrda / Prrdi / Parrday",cont:"Parr rya / Parr rae",future:"Parrun ga (I)"},
+  {en:"write",root:"Likhna / Likh",present:"Likhda / Likhdi / Likhday",cont:"Likh rya / Likh rae",future:"Likhun ga (I)"},
+  {en:"go",root:"Jana / Ja",present:"Janda / Jandi / Janday",cont:"Ja rya / Ja rae",future:"Jaun ga (I) / Ja a ga (He)"},
+  {en:"cook",root:"Pakana / Paka",present:"Pakanda / Pakandi / Pakanday",cont:"Paka rya / Paka rae",future:"Pakaa gi (She)"},
+  {en:"watch",root:"Dekhna / Dekh",present:"Dekhda / Dekhdi / Dekhday",cont:"Dekh rya / Dekh rae",future:"Dekha ga (He)"},
+];
+
+const lessons=[
+  {num:1,title:"Lesson 1 — 'I', 'He/She', Basic Vocab",
+   rules:[
+     {tag:"Use of I",text:"<strong>Mein</strong> = I &nbsp;|&nbsp; <strong>Aa</strong> = am/is/are<br>e.g. Mein Fahad aa. (I am Fahad.)"},
+     {tag:"He / She",text:"<strong>Oh</strong> = He AND She in Punjabi!<br>e.g. Oh mera dost aa. (He is my friend.)"},
+   ],
+   sentences:[
+     {en:"I am happy.",pun:"Mein koosh aa."},
+     {en:"I am a husband.",pun:"Mein shohar aa."},
+     {en:"He is my old friend.",pun:"Oh mera purana dost aa."},
+     {en:"She goes to gym daily.",pun:"Oh her roz gym jandi aa."},
+     {en:"He is my younger brother.",pun:"Oh mera chota pra aa."},
+     {en:"I live with my family.",pun:"Mein apni family nal renda aa."},
+     {en:"My dad is reading book.",pun:"Mera abu kittab par rya aa."},
+   ]},
+  {num:2,title:"Lesson 2 — This/That, These/Those, We, You, They",
+   rules:[
+     {tag:"This / That",text:"<strong>Aa</strong> = This &nbsp;|&nbsp; <strong>Oo</strong> = That"},
+     {tag:"'s and Of",text:"<strong>Da/Di/Day/Diyyan</strong> = 's or of<br>Da (M,S) | Di (F,S) | Day (M,P) | Diyyan (F,P)"},
+     {tag:"We / You",text:"<strong>Asi</strong> = We | <strong>Tusi</strong> = You (formal) | <strong>Tu</strong> = You (informal)"},
+   ],
+   sentences:[
+     {en:"This is his mobile.",pun:"Aa oda mobile."},
+     {en:"This is my dad's room.",pun:"Aa meray abu da kamra aa."},
+     {en:"That is my laptop.",pun:"Oh mera laptop aa."},
+     {en:"These are my books.",pun:"Aa meriyyan kittaban aa."},
+     {en:"Those are my friends.",pun:"Oo meray dost aa."},
+     {en:"They go to bazar.",pun:"Oh bazar janday aa."},
+     {en:"We are speaking Punjabi.",pun:"Asi Punjabi bol rae aa."},
+     {en:"You are not happy today.",pun:"Tusi aj koosh nae oo."},
+     {en:"My relatives live in Pakistan.",pun:"Meray rishtaydar pakistan vich renday aa."},
+   ]},
+  {num:3,title:"Lesson 3 — Present Simple Tense",
+   rules:[
+     {tag:"Present Simple Formula",text:"<strong>Subject + Object + Verb + da/di/day/diyyan + aa</strong><br>da = He/I (M,S) | di = She (F,S) | day = They/We (M,P) | diyyan = They (F,P)"},
+   ],
+   sentences:[
+     {en:"She eats burger.",pun:"Oh burger khandi aa."},
+     {en:"My mom eats vegetable.",pun:"Meri ami sabzi khandi aa."},
+     {en:"My dad only eats meat.",pun:"Meray abu siraf gosht khanday aa."},
+     {en:"I eat spicy food.",pun:"Mein mirch ala khana khanda aa."},
+     {en:"My dad drinks tea daily.",pun:"Meray abu har roz chae peenday aa."},
+     {en:"We drink tea together.",pun:"Asi chae mil k peenday aa."},
+     {en:"My dad reads newspaper in the morning.",pun:"Meray abu subha nu har roz ikhbar parrday aa."},
+     {en:"My mom writes poetry.",pun:"Meri ami shaeri likhdi aa."},
+   ]},
+  {num:4,title:"Lesson 4 — Present Continuous (-ing)",
+   rules:[
+     {tag:"Present Continuous Formula",text:"<strong>Subject + Object + Verb + rae/rya/raaye/riyyan + aa</strong><br>rya = He/I (M,S) | rae = She (F,S) | raaye = They (M,P) | riyyan = They (F,P)"},
+   ],
+   sentences:[
+     {en:"I am eating burger.",pun:"Mein burger kha rya aa."},
+     {en:"She is eating pizza.",pun:"Oh pizza kha rae aa."},
+     {en:"He is drinking water.",pun:"Oh pani pee rya."},
+     {en:"They are drinking tea.",pun:"Oh cha pee raaye aa."},
+     {en:"My brother is laughing.",pun:"Mera pra hass rya aa."},
+     {en:"My friend is weeping.",pun:"Mera dost ro rya aa."},
+     {en:"She is sleeping now.",pun:"Oh hun so rae aa."},
+     {en:"My dad is watching movie.",pun:"Meray abu movie dekh raaye aa."},
+   ]},
+  {num:5,title:"Lesson 5 — Future Tense",
+   rules:[
+     {tag:"Future — I",text:"<strong>Mein + Verb + un/wa + ga</strong><br>e.g. Mein khaun ga. (I will eat.)"},
+     {tag:"Future — He/She",text:"<strong>Oh + Verb + aa + ga/gi</strong> (ga = male, gi = female)"},
+     {tag:"Future — They",text:"<strong>Oh + Verb + an + gay</strong>"},
+     {tag:"Future — We",text:"<strong>Asi + Verb + a + gay</strong>"},
+   ],
+   sentences:[
+     {en:"I will eat.",pun:"Mein khaun ga."},
+     {en:"I will go early today.",pun:"Aj mein jldi jaun ga."},
+     {en:"I will call you later.",pun:"Mein tenu baad vich call krun ga."},
+     {en:"I will give you money later.",pun:"Mein tenu passay baad vich daun ga."},
+     {en:"He will watch movie.",pun:"Oh movie dekha ga."},
+     {en:"She will cook rice today.",pun:"Oh aj chawal pakaa gi."},
+     {en:"My mom will cook chicken.",pun:"Meri ami chicken pakaa gi."},
+     {en:"My brother will come early today.",pun:"Mera pra aj jldi aa ga."},
+     {en:"They will go to Pakistan.",pun:"Oh pakistan jaan gay."},
+     {en:"We will watch match today.",pun:"Asi aj match dekha gay."},
+   ]},
+  {num:6,title:"Lesson 6 — I Have / Meray Kol / Liking",
+   rules:[
+     {tag:"I have (object)",text:"<strong>Meray kol</strong> = I have (something physical)<br>e.g. Meray kol gadi aa."},
+     {tag:"I have (family)",text:"<strong>Meray + number + noun</strong><br>e.g. Meray do pra aa. (I have two brothers.)"},
+     {tag:"Like / Prefer",text:"<strong>Menu + noun + passand aa</strong> = I like...<br>e.g. Menu KIA gadi passand aa."},
+   ],
+   sentences:[
+     {en:"I have two brothers.",pun:"Meray do pra aa."},
+     {en:"I have one car.",pun:"Meray kol gadi aa."},
+     {en:"I have two cats.",pun:"Meray kol do billiyan aa."},
+     {en:"My dad has a house in Lahore.",pun:"Meray abu kol lahore vich ghar aa."},
+     {en:"But I have one house in London.",pun:"Lakin meray kol london vich aik ghar aa."},
+     {en:"I like KIA car.",pun:"Menu KIA gadi passand aa."},
+     {en:"I like chicken burger.",pun:"Menu chicken burger passand aa."},
+     {en:"I am learning Punjabi.",pun:"Mein punjabi seekh rya aa."},
+   ]},
+  {num:7,title:"Lesson 7 — Daily Routine & Telling the Time (18 Feb 2026)",
+   passage:{
+     en:"My name is Atif. I wake up early in the morning. Then I brush my teeth. I take a shower. I eat my breakfast. After that, I go to work. I work hard. I come back home in the evening. I eat dinner with my family. Then I read a book. I go to bed at night. I love my family.",
+     pun:"Mera naa Eessa aa. Mein subha jldi othda aa. Faer mein apnay dand saaf krda aa. Mein nanda aa. Mein nashta krda aa. Oday baad, mein kam ty janda aa. Mein mehnat krda. Mein sham nu kar wapas anda aa. Mein apni family naal raat da khana khanda aa. Phir mein kitab perrda aa. Mein raat nu sonda aa. Mein apni family naal pyar krda aa."
+   },
+   rules:[
+     {tag:"Daily Routine Verbs",text:"<strong>Othda aa</strong> = wakes up &nbsp;|&nbsp; <strong>Nanda</strong> = takes a shower<br><strong>Sonda aa</strong> = goes to bed &nbsp;|&nbsp; <strong>Wapas anda aa</strong> = comes back"},
+     {tag:"Telling the Time",text:"<strong>Kinnay wajay?</strong> = At what time? &nbsp;|&nbsp; <strong>___ wajay</strong> = at ___ o'clock<br>e.g. Ath wajay = at 8 o'clock &nbsp;|&nbsp; Sarray saat = 7:30"},
+     {tag:"Numbers 1–12",text:"Aik · Do · Teen · Char · Panj · Chay · Sat · Ath · No · Das · Gyara · Bara"},
+     {tag:"Time of Day",text:"<strong>Subha</strong> = morning &nbsp;|&nbsp; <strong>Dupar</strong> = noon &nbsp;|&nbsp; <strong>Sham</strong> = evening &nbsp;|&nbsp; <strong>Raat</strong> = night"},
+   ],
+   sentences:[
+     {en:"I wake up early in the morning.",pun:"Mein subha jldi othda aa."},
+     {en:"Then I brush my teeth.",pun:"Faer mein apnay dand saaf krda aa."},
+     {en:"I take a shower.",pun:"Mein nanda aa."},
+     {en:"I eat my breakfast.",pun:"Mein nashta krda aa."},
+     {en:"After that, I go to work.",pun:"Oday baad, mein kam ty janda aa."},
+     {en:"I work hard.",pun:"Mein mehnat krda."},
+     {en:"I come back home in the evening.",pun:"Mein sham nu kar wapas anda aa."},
+     {en:"I eat dinner with my family.",pun:"Mein apni family naal raat da khana khanda aa."},
+     {en:"Then I read a book.",pun:"Phir mein kitab perrda aa."},
+     {en:"I go to bed at night.",pun:"Mein raat nu sonda aa."},
+     {en:"I love my family.",pun:"Mein apni family naal pyar krda aa."},
+     {en:"My sister doesn't wake up early in the morning.",pun:"Meri pan subha jldi nae othdi aa."},
+     {en:"I will go to gym at night.",pun:"Mein gym raat nu jaun ga."},
+     {en:"My dad comes home at 4 o'clock in the evening.",pun:"Meray abu sham nu char wajay ghar wapis anday aa."},
+     {en:"At what time do you go to gym?",pun:"Tusi kinnay wajay gym janday oo?"},
+     {en:"I go to gym at 8 o'clock at night.",pun:"Mein raat nu ath wajay gym janda aa."},
+     {en:"At what time do you go to the office?",pun:"Tusi kinnay wajay office janday oo?"},
+     {en:"I go to work at 7 in the morning.",pun:"Mein subha 7 wajay kam ty janda aa."},
+     {en:"At what time do you eat breakfast?",pun:"Tusi kinnay wajay nashta krdy oo?"},
+     {en:"I eat breakfast at 7:30 in the morning.",pun:"Mein subha sarray saat wajay nashta krda aa."},
+     {en:"At what time do you eat lunch?",pun:"Tusi kinnay wajay dupaher da khana knaday oo?"},
+     {en:"I eat lunch at 1 o'clock.",pun:"Mein 1 wajay dupar da khana kanda aa."},
+     {en:"When does your mum cook food?",pun:"Tuhadi ami kido khana pakandi aa?"},
+     {en:"My mum cooks food at 5 o'clock.",pun:"Meri ami 5 wajay khana pakndi aa."},
+   ]},
+];
+
+const notesTabs=["General","Vocab","Grammar","Sentences","Questions"];
+const quickPhrases=[
+  "Mein ___ aa","Oh ___ aa","Mera / Meri / Meray / Meriyyan","Da / Di / Day / Diyyan",
+  "Kha rya aa (eating)","Khaun ga (I will eat)","Meray kol ___","Menu ___ passand aa",
+  "Tusi / Tu","Asi ja rae aa","Har roz","Baad vich","Vich aa (is in)","Nal (with)",
+];
+
+// ===== VOICE ENGINE =====
+let voices=[], selectedVoice=null, speechRate=0.82;
+let currentSpeakBtn=null;
+let recognition=null, hasMic=false, activeRecKey=null;
+
+function initVoices(){
+  if(!window.speechSynthesis) return;
+
+  function load(){
+    const all=window.speechSynthesis.getVoices();
+    if(!all.length) return;
+    voices=all;
+
+    // Android Google TTS voice priority:
+    // 1. pa-PK (Punjabi Pakistan) 2. ur-PK (Urdu Pakistan) 3. pa-IN (Punjabi India)
+    // 4. hi-IN (Hindi — good phonetic match) 5. anything else
+    const score=v=>{
+      if(/pa-PK/i.test(v.lang)) return 0;
+      if(/ur-PK/i.test(v.lang)) return 1;
+      if(/pa-IN/i.test(v.lang)) return 2;
+      if(/hi-IN/i.test(v.lang)) return 3;
+      if(/pa/i.test(v.lang))    return 4;
+      if(/ur/i.test(v.lang))    return 5;
+      if(/hi/i.test(v.lang))    return 6;
+      return 7;
+    };
+    const ordered=[...all].sort((a,b)=>score(a)-score(b));
+    window._orderedVoices=ordered;
+
+    const sel=document.getElementById('voice-select');
+    sel.innerHTML=ordered.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('');
+    sel.value=0;
+    selectedVoice=ordered[0];
+  }
+
+  // Android Chrome fires onvoiceschanged; call load immediately too
+  speechSynthesis.onvoiceschanged=load;
+  load();
+  setTimeout(load, 300);
+}
+
+function saveVoicePref(){
+  const sel=document.getElementById('voice-select');
+  const rsel=document.getElementById('rate-select');
+  if(sel&&window._orderedVoices) selectedVoice=window._orderedVoices[parseInt(sel.value)];
+  if(rsel) speechRate=parseFloat(rsel.value);
+}
+
+function speakRaw(text){
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text.replace(/[+]/g,''));
+  if(selectedVoice) u.voice=selectedVoice;
+  u.rate=speechRate; u.pitch=1;
+  window.speechSynthesis.speak(u);
+}
+
+function speakText(text,btn){
+  if(!window.speechSynthesis){alert('Text-to-speech not supported in this browser.');return;}
+  window.speechSynthesis.cancel();
+  if(currentSpeakBtn&&currentSpeakBtn!==btn) currentSpeakBtn.classList.remove('speaking');
+  currentSpeakBtn=btn;
+  btn.classList.add('speaking');
+  const u=new SpeechSynthesisUtterance(text.replace(/[+]/g,''));
+  if(selectedVoice) u.voice=selectedVoice;
+  u.rate=speechRate; u.pitch=1;
+  u.onend=()=>btn.classList.remove('speaking');
+  u.onerror=()=>btn.classList.remove('speaking');
+  // Android workaround: resume if synthesis gets stuck
+  const resume=setInterval(()=>{if(window.speechSynthesis.paused)window.speechSynthesis.resume();},500);
+  u.onend=()=>{btn.classList.remove('speaking');clearInterval(resume);};
+  u.onerror=()=>{btn.classList.remove('speaking');clearInterval(resume);};
+  window.speechSynthesis.speak(u);
+}
+
+function sbHtml(t){
+  // Build speak button HTML safely
+  const s=t.replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/'/g,"\\'");
+  return `<button class="speak-btn" onclick="speakText('${s}',this)"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>Hear</button>`;
+}
+function mbHtml(id,fn){
+  return `<button class="mic-btn" id="${id}" onclick="${fn}"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.44 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>Speak</button>`;
+}
+
+// ===== MIC =====
+function initMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR) return;
+  hasMic=true;
+  recognition=new SR();
+  recognition.continuous=false;
+  recognition.interimResults=true;
+  // pa-PK works well on Android Chrome with Google Speech
+  recognition.lang='pa-PK';
+}
+
+function startMic(key,onResult,onEnd){
+  if(!recognition) return;
+  if(activeRecKey) try{recognition.stop();}catch(e){}
+  activeRecKey=key;
+  recognition.onresult=e=>{
+    const t=Array.from(e.results).map(r=>r[0].transcript).join('');
+    onResult(t);
+  };
+  recognition.onend=()=>{activeRecKey=null; onEnd&&onEnd();};
+  recognition.onerror=()=>{activeRecKey=null; onEnd&&onEnd();};
+  try{recognition.start();}catch(e){activeRecKey=null;}
+}
+
+function toggleMicQuiz(){
+  const btn=document.getElementById('quiz-mic-btn');
+  const trans=document.getElementById('mic-transcript');
+  if(!recognition) return;
+  if(activeRecKey==='quiz'){try{recognition.stop();}catch(e){} if(btn)btn.classList.remove('listening');return;}
+  if(btn)btn.classList.add('listening');
+  if(trans)trans.textContent='🎤 Listening…';
+  startMic('quiz',
+    t=>{const inp=document.getElementById('type-input');if(inp)inp.value=t;if(trans)trans.textContent=t;},
+    ()=>{if(btn)btn.classList.remove('listening');if(trans&&trans.textContent==='🎤 Listening…')trans.textContent='';}
+  );
+}
+
+function toggleMicTranslate(i){
+  const btn=document.getElementById('t-mic-'+i);
+  const trans=document.getElementById('t-trans-'+i);
+  const key='tr'+i;
+  if(!recognition) return;
+  if(activeRecKey===key){try{recognition.stop();}catch(e){} if(btn)btn.classList.remove('listening');return;}
+  if(btn)btn.classList.add('listening');
+  if(trans)trans.textContent='🎤 Listening…';
+  startMic(key,
+    t=>{const ta=document.getElementById('ta-'+i);if(ta)ta.value=t;if(trans)trans.textContent=t;},
+    ()=>{if(btn)btn.classList.remove('listening');if(trans&&trans.textContent==='🎤 Listening…')trans.textContent='';}
+  );
+}
+
+// ===== VOCAB =====
+function renderVocab(cat='all'){
+  const items=cat==='all'?vocab:vocab.filter(v=>v.cat===cat);
+  document.getElementById('vocab-grid').innerHTML=items.map(v=>`
+    <div class="vocab-card">
+      <div class="english">${v.en}</div>
+      <div class="punjabi">${v.pun}</div>
+      ${sbHtml(v.pun)}
+    </div>`).join('');
+}
+function filterVocab(cat,btn){
+  document.querySelectorAll('#vocab .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderVocab(cat);
+}
+
+function renderVerbTable(){
+  document.getElementById('verb-table-body').innerHTML=verbData.map(v=>`
+    <tr><td><strong>${v.en}</strong></td><td>${v.root}</td><td>${v.present}</td><td>${v.cont}</td><td>${v.future}</td></tr>`).join('');
+}
+
+// ===== LESSONS =====
+function renderLessons(){
+  document.getElementById('lesson-list').innerHTML=lessons.map(l=>`
+    <div class="lesson-panel" id="panel-${l.num}">
+      <div class="lesson-header" onclick="toggleLesson(${l.num})">
+        <div class="lesson-num">${l.num}</div>
+        <div class="lesson-title">${l.title}</div>
+        <div class="lesson-chevron">▾</div>
+      </div>
+      <div class="lesson-body">
+        ${l.passage?`
+        <div class="passage-block">
+          <div class="passage-label">📖 Reading Passage</div>
+          <div class="passage-en">${l.passage.en}</div>
+          <div class="passage-divider"></div>
+          <div class="passage-pun">${l.passage.pun} ${sbHtml(l.passage.pun)}</div>
+        </div>`:''}
+        ${l.rules.map(r=>`<div class="rule-box"><div class="rule-tag">${r.tag}</div><br>${r.text}</div>`).join('')}
+        <div style="margin-top:10px;">
+          ${l.sentences.map(s=>`
+            <div class="sentence-row">
+              <div class="sentence-en">${s.en}</div>
+              <div class="sentence-pun"><span>${s.pun}</span>${sbHtml(s.pun)}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`).join('');
+}
+function toggleLesson(n){document.getElementById('panel-'+n).classList.toggle('open');}
+
+// ===== QUIZ =====
+let qqs=[],curQ=0,score=0,answered=false,quizMode='mcq';
+function shuffle(a){return[...a].sort(()=>Math.random()-0.5);}
+
+function buildQ(){
+  let qs=[];
+  vocab.forEach(v=>{
+    const w=vocab.filter(x=>x.pun!==v.pun).sort(()=>Math.random()-0.5).slice(0,3);
+    qs.push({type:'mcq',prompt:v.en,sub:"Translate to Punjabi",answer:v.pun,opts:shuffle([v,...w]).map(o=>o.pun),isPun:false});
+  });
+  lessons.forEach(l=>l.sentences.forEach(s=>{
+    qs.push({type:'type',prompt:s.en,sub:"Type or speak the Punjabi",answer:s.pun});
+  }));
+  vocab.slice(0,30).forEach(v=>{
+    const w=vocab.filter(x=>x.en!==v.en).sort(()=>Math.random()-0.5).slice(0,3);
+    qs.push({type:'mcq',prompt:v.pun,sub:"What does this mean?",answer:v.en,opts:shuffle([v,...w]).map(o=>o.en),isPun:true});
+  });
+  return shuffle(qs);
+}
+
+function setQuizMode(mode,btn){
+  quizMode=mode;
+  document.querySelectorAll('#quiz .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); startQuiz();
+}
+function startQuiz(){
+  qqs=buildQ().filter(q=>quizMode==='type'?q.type==='type':q.type==='mcq').slice(0,quizMode==='type'?20:25);
+  curQ=0;score=0;answered=false;renderQ();
+}
+
+function renderQ(){
+  if(curQ>=qqs.length){showScore();return;}
+  document.getElementById('progress-fill').style.width=Math.round((curQ/qqs.length)*100)+'%';
+  document.getElementById('progress-text').textContent=`${curQ} / ${qqs.length}`;
+  document.getElementById('quiz-controls').style.display='flex';
+  answered=false;
+  const q=qqs[curQ], area=document.getElementById('quiz-area');
+
+  if(q.type==='mcq'){
+    area.innerHTML=`<div class="quiz-card">
+      <div class="quiz-type-badge">Multiple Choice</div>
+      <div class="quiz-sub">${q.sub}</div>
+      <div class="quiz-prompt">${q.prompt}</div>
+      ${q.isPun?sbHtml(q.prompt):''}
+      <div class="quiz-options">
+        ${q.opts.map(o=>`<button class="quiz-option" onclick="checkMCQ(this,\`${o.replace(/`/g,'\\`')}\`,\`${q.answer.replace(/`/g,'\\`')}\`)">${o}</button>`).join('')}
+      </div>
+      <div id="qfb"></div>
+    </div>`;
+  } else {
+    area.innerHTML=`<div class="quiz-card">
+      <div class="quiz-type-badge">Translate It</div>
+      <div class="quiz-sub">${q.sub}</div>
+      <div class="quiz-prompt">${q.prompt}</div>
+      <div class="quiz-type-input">
+        <input type="text" class="quiz-input" id="qinp" placeholder="Type your answer…" autocomplete="off" onkeydown="if(event.key==='Enter')checkType()">
+        <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:center;">
+          <button class="btn btn-green" onclick="checkType()">Check</button>
+          ${hasMic?mbHtml('quiz-mic-btn','toggleMicQuiz()'):''}
+        </div>
+        <div class="mic-transcript" id="mic-transcript"></div>
+      </div>
+      <div id="qfb"></div>
+    </div>`;
+    if(!isMobile()) setTimeout(()=>{const e=document.getElementById('qinp');if(e)e.focus();},80);
+  }
+}
+
+function checkMCQ(btn,chosen,answer){
+  if(answered)return; answered=true;
+  document.querySelectorAll('.quiz-option').forEach(b=>b.disabled=true);
+  const ok=chosen===answer;
+  btn.classList.add(ok?'correct':'wrong');
+  if(!ok) document.querySelectorAll('.quiz-option').forEach(b=>{if(b.textContent.trim()===answer)b.classList.add('correct');});
+  if(ok){score++;speakRaw('Shabash');}
+  document.getElementById('qfb').innerHTML=`<div class="quiz-feedback ${ok?'correct':'wrong'}">${ok?'✓ Correct! Shabash!':'✗ Not quite'}</div>${!ok?`<div class="quiz-answer-reveal">Answer: ${answer}</div>`:''}`;
+}
+function checkType(){
+  if(answered)return;
+  const inp=document.getElementById('qinp'); if(!inp)return;
+  const q=qqs[curQ];
+  const n=s=>s.replace(/[+.]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+  const ok=n(inp.value)===n(q.answer)||(n(q.answer).includes(n(inp.value))&&n(inp.value).length>4);
+  answered=true; inp.disabled=true; inp.classList.add(ok?'correct':'wrong');
+  if(ok){score++;speakRaw('Shabash');}
+  document.getElementById('qfb').innerHTML=`<div class="quiz-feedback ${ok?'correct':'wrong'}">${ok?'✓ Shabash!':'✗ Not quite'}</div>${!ok?`<div class="quiz-answer-reveal">Answer: ${q.answer}</div>`:''}`;
+}
+function nextQuestion(){curQ++;renderQ();}
+function skipQuestion(){curQ++;renderQ();}
+function showScore(){
+  const t=qqs.length,pct=Math.round((score/t)*100);
+  const stars=pct>=80?'⭐⭐⭐':pct>=55?'⭐⭐':'⭐';
+  document.getElementById('progress-fill').style.width='100%';
+  document.getElementById('progress-text').textContent=`${t} / ${t}`;
+  document.getElementById('quiz-controls').style.display='none';
+  document.getElementById('quiz-area').innerHTML=`<div class="score-card">
+    <div class="score-stars">${stars}</div>
+    <div class="score-big">${score}/${t}</div>
+    <div class="score-label">${pct}% — ${pct>=80?'Bahut Vadiya! (Excellent!)':pct>=55?'Changi koshish! (Good effort!)':'Seekhte raho! (Keep going!)'}</div>
+    <div style="display:flex;gap:9px;justify-content:center;margin-top:8px;">
+      <button class="btn btn-green" onclick="startQuiz()">Try Again</button>
+      <button class="btn btn-outline" onclick="showSection('lessons')">Review Lessons</button>
+    </div>
+  </div>`;
+}
+
+// ===== TRANSLATE =====
+let allS=[],tM={};
+function getAllS(){return lessons.flatMap(l=>l.sentences.map(s=>({en:s.en,pun:s.pun})));}
+function shuffleTranslate(){initTranslate(true);}
+function initTranslate(doShuffle=false){
+  allS=getAllS(); if(doShuffle) allS=shuffle(allS);
+  tM={}; document.getElementById('translate-summary').classList.remove('show');
+  renderTC();
+}
+function renderTC(){
+  const total=allS.length,done=Object.keys(tM).length;
+  document.getElementById('t-progress-fill').style.width=Math.round((done/total)*100)+'%';
+  document.getElementById('t-progress-text').textContent=`${done} / ${total}`;
+  document.getElementById('translate-cards').innerHTML=allS.map((s,i)=>{
+    const m=tM[i];
+    const bc=m==='got'?'var(--green)':m==='missed'?'var(--red)':'#e8ebe6';
+    return `<div class="translate-card" id="tc-${i}" style="border-color:${bc}">
+      <div class="translate-counter">Sentence ${i+1} of ${total}</div>
+      <div class="translate-prompt">${s.en}</div>
+      <div class="translate-hint">Write or speak the Punjabi — then reveal to check</div>
+      <textarea class="translate-textarea" id="ta-${i}" placeholder="Mein…" rows="3"${m?' disabled':''}></textarea>
+      ${hasMic&&!m?`<div style="display:flex;align-items:center;gap:9px;margin-top:9px;flex-wrap:wrap;">${mbHtml('t-mic-'+i,'toggleMicTranslate('+i+')')}<span class="mic-transcript" id="t-trans-${i}" style="margin:0;text-align:left;"></span></div>`:''}
+      <div class="translate-answer-box${m?' show':''}" id="ans-${i}">
+        <div class="translate-answer-label">Punjabi Answer ${sbHtml(s.pun)}</div>
+        <div class="translate-answer-text">${s.pun}</div>
+      </div>
+      <div class="translate-self-mark${m?' show':''}" id="sm-${i}">
+        <span class="translate-self-label">How did you do?</span>
+        <button class="mark-btn got-it${m==='got'?' selected':''}" onclick="markIt(${i},'got')">✓ Got it</button>
+        <button class="mark-btn missed${m==='missed'?' selected':''}" onclick="markIt(${i},'missed')">✗ Missed</button>
+      </div>
+      ${!m?`<div class="translate-row-btns">
+        <button class="btn btn-green" onclick="revealA(${i})">Reveal Answer</button>
+        <button class="btn btn-outline" style="font-size:0.78rem;padding:7px 11px;" onclick="skipT(${i})">Skip</button>
+      </div>`:`<div style="margin-top:9px;font-size:0.76rem;color:var(--light);">${m==='got'?'✓ Got it':'✗ Missed'}</div>`}
+    </div>`;
+  }).join('');
+}
+function revealA(i){
+  document.getElementById('ans-'+i).classList.add('show');
+  document.getElementById('sm-'+i).classList.add('show');
+  const ta=document.getElementById('ta-'+i); if(ta) ta.disabled=true;
+  const card=document.getElementById('tc-'+i);
+  const rb=card.querySelector('.translate-row-btns'); if(rb) rb.remove();
+  const mrow=card.querySelector('.mic-btn'); if(mrow&&mrow.parentElement) mrow.parentElement.remove();
+}
+function markIt(i,r){
+  tM[i]=r;
+  const card=document.getElementById('tc-'+i);
+  card.style.borderColor=r==='got'?'var(--green)':'var(--red)';
+  card.querySelectorAll('.mark-btn').forEach(b=>b.classList.remove('selected'));
+  const b=card.querySelector('.mark-btn.'+(r==='got'?'got-it':'missed')); if(b) b.classList.add('selected');
+  updateTP();
+}
+function skipT(i){tM[i]='skip';revealA(i);updateTP();}
+function updateTP(){
+  const total=allS.length,done=Object.keys(tM).length;
+  document.getElementById('t-progress-fill').style.width=Math.round((done/total)*100)+'%';
+  document.getElementById('t-progress-text').textContent=`${done} / ${total}`;
+  if(done===total) showTS();
+}
+function showTS(){
+  const got=Object.values(tM).filter(v=>v==='got').length;
+  const missed=Object.values(tM).filter(v=>v==='missed').length;
+  const skipped=Object.values(tM).filter(v=>v==='skip').length;
+  document.getElementById('tally-got').textContent=got;
+  document.getElementById('tally-missed').textContent=missed;
+  document.getElementById('tally-skip').textContent=skipped;
+  document.getElementById('t-progress-fill').style.width='100%';
+  const s=document.getElementById('translate-summary'); s.classList.add('show');
+  s.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function restartTranslate(){document.getElementById('translate-summary').classList.remove('show');initTranslate();}
+
+// ===== NOTES =====
+let curNoteTab=notesTabs[0], saveTimer=null;
+function renderNotesTabs(){
+  document.getElementById('notes-toolbar').innerHTML=notesTabs.map(t=>`<button class="notes-tab-btn${t===curNoteTab?' active':''}" onclick="switchNoteTab('${t}')">${t}</button>`).join('');
+}
+function switchNoteTab(tab){curNoteTab=tab;renderNotesTabs();loadNote();}
+function loadNote(){
+  document.getElementById('note-area').value=localStorage.getItem('note_'+curNoteTab)||'';
+}
+function saveNote(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{
+    localStorage.setItem('note_'+curNoteTab,document.getElementById('note-area').value);
+    const b=document.getElementById('saved-badge'); b.classList.add('show');
+    setTimeout(()=>b.classList.remove('show'),1800);
+  },600);
+}
+function renderQuickPhrases(){
+  document.getElementById('phrase-chips').innerHTML=quickPhrases.map(p=>`<div class="phrase-chip" onclick="insertPhrase('${p.replace(/'/g,"\\'")}')">${p}</div>`).join('');
+}
+function insertPhrase(p){
+  const ta=document.getElementById('note-area');
+  const pos=ta.selectionStart,val=ta.value;
+  ta.value=val.slice(0,pos)+p+'\n'+val.slice(pos);
+  ta.selectionStart=ta.selectionEnd=pos+p.length+1;
+  ta.focus(); saveNote();
+}
+
+// ===== NAV =====
+function showSection(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const idx=['vocab','lessons','quiz','translate','notes'].indexOf(id);
+  document.querySelectorAll('.nav-tab')[idx].classList.add('active');
+  if(id==='quiz') startQuiz();
+  if(id==='translate') initTranslate();
+  if(id==='notes'){renderNotesTabs();loadNote();renderQuickPhrases();}
+}
+
+// ===== INIT =====
+renderVocab();
+renderVerbTable();
+renderLessons();
+initTranslate();
+initVoices();
+initMic();
+</script>
+</body>
+</html>
