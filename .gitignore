@@ -1,0 +1,5 @@
+node_modules/
+dist/
+/punjabi_lesson_material/
+.DS_Store
+*.log
