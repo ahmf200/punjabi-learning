@@ -54,3 +54,13 @@ export interface QuizQuestion {
   direction: "english-to-punjabi" | "punjabi-to-english";
   options: string[];
 }
+
+export type TranslationDirection = "english-to-punjabi" | "punjabi-to-english";
+
+export interface TranslationPrompt {
+  id: string;
+  english: string;
+  punjabi: string;
+  level: "sentence" | "paragraph";
+  source: string;
+}
