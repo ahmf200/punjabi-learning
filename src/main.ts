@@ -1,8 +1,9 @@
 import "./styles.css";
 import { lessons } from "./data/lessons";
 import { materialHref, materials } from "./data/materials";
+import { translationPrompts } from "./data/translationPrompts";
 import { vocabulary } from "./data/vocabulary";
-import type { QuizQuestion, SectionId, VocabCategory } from "./types";
+import type { QuizQuestion, SectionId, TranslationDirection, TranslationPrompt, VocabCategory } from "./types";
 import { byId, escapeHtml } from "./utils/dom";
 import { buildQuizQuestions, isCloseAnswer, shuffle } from "./utils/quiz";
 import { SpeechController } from "./utils/speech";
@@ -21,12 +22,19 @@ const speech = new SpeechController();
 interface AppState {
   section: SectionId;
   vocabCategory: VocabCategory | "all";
-  activeLessonId: string;
+  activeLessonId: string | null;
   quizQuestions: QuizQuestion[];
   currentQuestionIndex: number;
   score: number;
   selectedAnswer: string | null;
   typedAnswer: string;
+  practiceTab: "quick" | "translation";
+  translationDirection: TranslationDirection;
+  translationQueue: TranslationPrompt[];
+  currentTranslationIndex: number;
+  translationAnswer: string;
+  translationRevealed: boolean;
+  translationMarks: Array<"got" | "missed">;
   notesTab: string;
 }
 
@@ -39,6 +47,13 @@ const state: AppState = {
   score: 0,
   selectedAnswer: null,
   typedAnswer: "",
+  practiceTab: "quick",
+  translationDirection: "english-to-punjabi",
+  translationQueue: shuffle(translationPrompts).slice(0, 24),
+  currentTranslationIndex: 0,
+  translationAnswer: "",
+  translationRevealed: false,
+  translationMarks: [],
   notesTab: "General",
 };
 
@@ -173,7 +188,7 @@ function renderVocabulary(): string {
 }
 
 function renderLessons(): string {
-  const activeLesson = lessons.find((lesson) => lesson.id === state.activeLessonId) ?? lessons[0];
+  const activeLesson = lessons.find((lesson) => lesson.id === state.activeLessonId) ?? null;
 
   return `
     <section aria-labelledby="lessons-title">
@@ -187,48 +202,76 @@ function renderLessons(): string {
           ${lessons
             .map(
               (lesson) => `
-                <button class="lesson-list-item" data-lesson-id="${lesson.id}" aria-pressed="${lesson.id === activeLesson.id}">
-                  <span>${lesson.number}</span>
-                  <strong>${escapeHtml(lesson.title)}</strong>
-                  <small>${escapeHtml(lesson.summary)}</small>
-                </button>
+                <div class="lesson-list-group">
+                  <button
+                    class="lesson-list-item"
+                    data-lesson-id="${lesson.id}"
+                    aria-pressed="${lesson.id === activeLesson?.id}"
+                    aria-expanded="${lesson.id === activeLesson?.id}"
+                  >
+                    <span>${lesson.number}</span>
+                    <strong>${escapeHtml(lesson.title)}</strong>
+                    <small>${escapeHtml(lesson.summary)}</small>
+                  </button>
+                  ${lesson.id === activeLesson?.id ? renderLessonDetail(activeLesson, "mobile") : ""}
+                </div>
               `,
             )
             .join("")}
         </div>
-        <article class="panel lesson-detail">
-          <div class="panel-title-row">
-            <div>
-              <p class="section-label">Lesson ${activeLesson.number}${activeLesson.date ? ` · ${activeLesson.date}` : ""}</p>
-              <h2>${escapeHtml(activeLesson.title)}</h2>
-            </div>
-            ${activeLesson.source ? `<a class="button ghost" href="${materialHref(activeLesson.source)}">Source file</a>` : ""}
-          </div>
-          <p>${escapeHtml(activeLesson.summary)}</p>
-          ${activeLesson.passage ? renderPassage(activeLesson.passage) : ""}
-          <div class="rule-grid">
-            ${activeLesson.rules
-              .map(
-                (rule) => `
-                  <section class="rule-box">
-                    <h3>${escapeHtml(rule.title)}</h3>
-                    <p>${escapeHtml(rule.body)}</p>
-                  </section>
-                `,
-              )
-              .join("")}
-          </div>
-          <h3 class="content-heading">Practice Sentences</h3>
-          <div class="sentence-list">
-            ${activeLesson.sentences.map((sentence) => renderSentencePair(sentence, true)).join("")}
-          </div>
-        </article>
+        ${activeLesson ? renderLessonDetail(activeLesson, "desktop") : renderLessonEmptyState()}
       </div>
     </section>
   `;
 }
 
+function renderLessonDetail(lesson: typeof lessons[number], variant: "desktop" | "mobile"): string {
+  return `
+    <article class="panel lesson-detail lesson-detail-${variant}" data-lesson-detail="${variant}" tabindex="-1">
+      <div class="panel-title-row">
+        <div>
+          <p class="section-label">Lesson ${lesson.number}${lesson.date ? ` · ${lesson.date}` : ""}</p>
+          <h2>${escapeHtml(lesson.title)}</h2>
+        </div>
+        ${lesson.source ? `<a class="button ghost" href="${materialHref(lesson.source)}">Source file</a>` : ""}
+      </div>
+      <p>${escapeHtml(lesson.summary)}</p>
+      ${lesson.passage ? renderPassage(lesson.passage) : ""}
+      <div class="rule-grid">
+        ${lesson.rules
+          .map(
+            (rule) => `
+              <section class="rule-box">
+                <h3>${escapeHtml(rule.title)}</h3>
+                <p>${escapeHtml(rule.body)}</p>
+              </section>
+            `,
+          )
+          .join("")}
+      </div>
+      <h3 class="content-heading">Practice Sentences</h3>
+      <div class="sentence-list">
+        ${lesson.sentences.map((sentence) => renderSentencePair(sentence, true)).join("")}
+      </div>
+    </article>
+  `;
+}
+
+function renderLessonEmptyState(): string {
+  return `
+    <article class="panel lesson-detail lesson-detail-desktop empty-lesson-state">
+      <p class="section-label">Lessons</p>
+      <h2>Choose a lesson</h2>
+      <p>Select a lesson from the list to review rules, sentences, and source material.</p>
+    </article>
+  `;
+}
+
 function renderPractice(): string {
+  if (state.practiceTab === "translation") {
+    return renderTranslationPractice();
+  }
+
   const question = state.quizQuestions[state.currentQuestionIndex];
   const progress = Math.round((state.currentQuestionIndex / state.quizQuestions.length) * 100);
 
@@ -245,6 +288,7 @@ function renderPractice(): string {
         <h1 id="practice-title">Test yourself</h1>
         <p>Use multiple choice for speed, and typed answers when you want translation recall.</p>
       </div>
+      ${renderPracticeTabs()}
       <div class="practice-shell">
         <div class="progress-row" aria-label="Question progress">
           <div class="progress-track"><span style="width:${progress}%"></span></div>
@@ -266,6 +310,100 @@ function renderPractice(): string {
           <button class="button primary" data-quiz-next ${state.selectedAnswer ? "" : "disabled"}>Next</button>
           <button class="button ghost" data-quiz-reset>Restart</button>
         </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderTranslationPractice(): string {
+  const prompt = state.translationQueue[state.currentTranslationIndex];
+  const progress = Math.round((state.currentTranslationIndex / state.translationQueue.length) * 100);
+
+  if (!prompt) {
+    return renderTranslationComplete();
+  }
+
+  const promptText = state.translationDirection === "english-to-punjabi" ? prompt.english : prompt.punjabi;
+  const answerText = state.translationDirection === "english-to-punjabi" ? prompt.punjabi : prompt.english;
+
+  return `
+    <section aria-labelledby="practice-title">
+      <div class="page-heading compact-heading">
+        <p class="section-label">Practice</p>
+        <h1 id="practice-title">Translation drills</h1>
+        <p>Choose the direction, translate when you are ready, then reveal and mark yourself.</p>
+      </div>
+      ${renderPracticeTabs()}
+      <div class="practice-shell">
+        <div class="filter-row translation-tabs" role="tablist" aria-label="Translation direction">
+          <button class="chip" data-translation-direction="english-to-punjabi" aria-selected="${state.translationDirection === "english-to-punjabi"}">English to Roman Punjabi</button>
+          <button class="chip" data-translation-direction="punjabi-to-english" aria-selected="${state.translationDirection === "punjabi-to-english"}">Roman Punjabi to English</button>
+        </div>
+        <div class="progress-row" aria-label="Translation progress">
+          <div class="progress-track"><span style="width:${progress}%"></span></div>
+          <strong>${state.currentTranslationIndex + 1} / ${state.translationQueue.length}</strong>
+        </div>
+        <article class="quiz-card translation-card">
+          <div class="panel-title-row">
+            <div>
+              <p class="section-label">${prompt.level} · ${escapeHtml(prompt.source)}</p>
+              <h2>${escapeHtml(promptText)}</h2>
+            </div>
+            ${state.translationDirection === "punjabi-to-english" ? `<button class="listen-button" data-speak="${escapeHtml(promptText)}">${icon("volume")} Listen</button>` : ""}
+          </div>
+          <label class="sr-only" for="translation-answer">Your translation</label>
+          <textarea id="translation-answer" class="translation-answer" placeholder="${state.translationDirection === "english-to-punjabi" ? "Write Roman Punjabi..." : "Write English..."}">${escapeHtml(state.translationAnswer)}</textarea>
+          <div class="action-row">
+            <button class="button primary" data-translation-reveal>${state.translationRevealed ? "Hide answer" : "Reveal answer"}</button>
+            <button class="button ghost" data-translation-skip>Skip</button>
+            <button class="button ghost" data-translation-reset>New random test</button>
+          </div>
+          ${
+            state.translationRevealed
+              ? `<div class="feedback success translation-answer-box" role="status">
+                  <strong>Suggested translation</strong>
+                  <span>${escapeHtml(answerText)}</span>
+                </div>
+                <div class="action-row">
+                  <button class="button primary" data-translation-mark="got">I got it</button>
+                  <button class="button ghost" data-translation-mark="missed">I missed it</button>
+                </div>`
+              : ""
+          }
+        </article>
+      </div>
+    </section>
+  `;
+}
+
+function renderPracticeTabs(): string {
+  return `
+    <div class="filter-row practice-tabs" role="tablist" aria-label="Practice type">
+      <button class="chip" data-practice-tab="quick" aria-selected="${state.practiceTab === "quick"}">Quick quiz</button>
+      <button class="chip" data-practice-tab="translation" aria-selected="${state.practiceTab === "translation"}">Translation drills</button>
+    </div>
+  `;
+}
+
+function renderTranslationComplete(): string {
+  const got = state.translationMarks.filter((mark) => mark === "got").length;
+  const missed = state.translationMarks.filter((mark) => mark === "missed").length;
+
+  return `
+    <section aria-labelledby="practice-title">
+      <div class="page-heading compact-heading">
+        <p class="section-label">Practice</p>
+        <h1 id="practice-title">Translation drills</h1>
+        <p>You finished this randomized set. Start another set when you are ready.</p>
+      </div>
+      ${renderPracticeTabs()}
+      <div class="practice-shell">
+        <article class="panel complete-card">
+          <p class="section-label">Complete</p>
+          <h2>${got} got · ${missed} missed</h2>
+          <p>${got >= missed ? "Strong translation session." : "Good effort. Review the revealed answers and run another set."}</p>
+          <button class="button primary" data-translation-reset>Start another random test</button>
+        </article>
       </div>
     </section>
   `;
@@ -437,16 +575,39 @@ function bindEvents(): void {
 
   document.querySelectorAll<HTMLButtonElement>("[data-lesson-id]").forEach((button) => {
     button.addEventListener("click", () => {
-      state.activeLessonId = button.dataset.lessonId ?? state.activeLessonId;
+      const selectedLessonId = button.dataset.lessonId ?? null;
+      const isCollapsing = selectedLessonId === state.activeLessonId;
+      state.activeLessonId = isCollapsing ? null : selectedLessonId;
       render();
+      if (!isCollapsing) {
+        focusActiveLesson();
+      }
     });
   });
 
   bindPracticeEvents();
+  bindTranslationEvents();
   bindNotesEvents();
 }
 
+function focusActiveLesson(): void {
+  const detail =
+    window.matchMedia("(max-width: 820px)").matches
+      ? document.querySelector<HTMLElement>('[data-lesson-detail="mobile"]')
+      : document.querySelector<HTMLElement>('[data-lesson-detail="desktop"]');
+
+  detail?.focus({ preventScroll: true });
+  detail?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function bindPracticeEvents(): void {
+  document.querySelectorAll<HTMLButtonElement>("[data-practice-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.practiceTab = (button.dataset.practiceTab as AppState["practiceTab"]) ?? "quick";
+      render();
+    });
+  });
+
   document.querySelectorAll<HTMLButtonElement>("[data-option]").forEach((button) => {
     button.addEventListener("click", () => {
       const question = state.quizQuestions[state.currentQuestionIndex];
@@ -491,6 +652,44 @@ function bindPracticeEvents(): void {
     render();
   });
   document.querySelector("[data-quiz-reset]")?.addEventListener("click", resetQuiz);
+}
+
+function bindTranslationEvents(): void {
+  document.querySelectorAll<HTMLButtonElement>("[data-translation-direction]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.translationDirection = (button.dataset.translationDirection as TranslationDirection) ?? "english-to-punjabi";
+      resetTranslationQueue();
+    });
+  });
+
+  byIdOrNull<HTMLTextAreaElement>("translation-answer")?.addEventListener("input", (event) => {
+    state.translationAnswer = (event.target as HTMLTextAreaElement).value;
+  });
+
+  document.querySelector("[data-translation-reveal]")?.addEventListener("click", () => {
+    state.translationRevealed = !state.translationRevealed;
+    render();
+  });
+
+  document.querySelector("[data-translation-skip]")?.addEventListener("click", () => {
+    state.currentTranslationIndex += 1;
+    state.translationAnswer = "";
+    state.translationRevealed = false;
+    render();
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-translation-mark]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const mark = button.dataset.translationMark === "got" ? "got" : "missed";
+      state.translationMarks = [...state.translationMarks, mark];
+      state.currentTranslationIndex += 1;
+      state.translationAnswer = "";
+      state.translationRevealed = false;
+      render();
+    });
+  });
+
+  document.querySelector("[data-translation-reset]")?.addEventListener("click", resetTranslationQueue);
 }
 
 function bindNotesEvents(): void {
@@ -538,6 +737,15 @@ function resetQuiz(): void {
   state.score = 0;
   state.selectedAnswer = null;
   state.typedAnswer = "";
+  render();
+}
+
+function resetTranslationQueue(): void {
+  state.translationQueue = shuffle(translationPrompts).slice(0, 24);
+  state.currentTranslationIndex = 0;
+  state.translationAnswer = "";
+  state.translationRevealed = false;
+  state.translationMarks = [];
   render();
 }
 

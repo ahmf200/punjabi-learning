@@ -390,6 +390,11 @@ main {
   top: 5rem;
 }
 
+.lesson-list-group {
+  display: grid;
+  gap: 0.6rem;
+}
+
 .lesson-list-item {
   background: white;
   border-color: var(--border);
@@ -413,6 +418,19 @@ main {
 .lesson-list-item small {
   color: inherit;
   opacity: 0.78;
+}
+
+.lesson-detail-mobile {
+  display: none;
+}
+
+.lesson-detail {
+  scroll-margin-top: 5.5rem;
+}
+
+.empty-lesson-state {
+  align-content: start;
+  min-height: 14rem;
 }
 
 .rule-grid {
@@ -449,7 +467,12 @@ main {
 
 .practice-shell,
 .notes-shell {
-  max-width: 760px;
+  max-width: 860px;
+}
+
+.practice-tabs,
+.translation-tabs {
+  margin-bottom: 1rem;
 }
 
 .progress-row {
@@ -506,6 +529,7 @@ main {
 }
 
 .typed-answer input,
+.translation-answer,
 .notes-area {
   background: white;
   border: 1px solid var(--border);
@@ -517,6 +541,24 @@ main {
 .typed-answer input {
   min-height: 3rem;
   padding: 0 0.9rem;
+}
+
+.translation-card h2 {
+  font-size: clamp(1.15rem, 3vw, 1.75rem);
+  line-height: 1.35;
+}
+
+.translation-answer {
+  line-height: 1.55;
+  margin-top: 1rem;
+  min-height: 8rem;
+  padding: 0.9rem;
+  resize: vertical;
+}
+
+.translation-answer-box span {
+  color: var(--text);
+  white-space: pre-wrap;
 }
 
 .feedback {
@@ -627,6 +669,14 @@ main {
     max-height: none;
     overflow: visible;
     position: static;
+  }
+
+  .lesson-detail-desktop {
+    display: none;
+  }
+
+  .lesson-detail-mobile {
+    display: grid;
   }
 
   .page-heading h1 {
