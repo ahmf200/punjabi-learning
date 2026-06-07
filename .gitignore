@@ -3,3 +3,4 @@ dist/
 /punjabi_lesson_material/
 .DS_Store
 *.log
+.vite

@@ -1,9 +1,10 @@
 import "./styles.css";
 import { lessons } from "./data/lessons";
 import { materialHref, materials } from "./data/materials";
+import { readings } from "./data/readings";
 import { translationPrompts } from "./data/translationPrompts";
 import { vocabulary } from "./data/vocabulary";
-import type { QuizQuestion, SectionId, TranslationDirection, TranslationPrompt, VocabCategory } from "./types";
+import type { QuizQuestion, ReadingItem, SectionId, TranslationDirection, TranslationPrompt, VocabCategory } from "./types";
 import { byId, escapeHtml } from "./utils/dom";
 import { buildQuizQuestions, isCloseAnswer, shuffle } from "./utils/quiz";
 import { SpeechController } from "./utils/speech";
@@ -12,6 +13,7 @@ const sections: Array<{ id: SectionId; label: string }> = [
   { id: "dashboard", label: "Home" },
   { id: "vocabulary", label: "Vocab" },
   { id: "lessons", label: "Lessons" },
+  { id: "reading", label: "Reading" },
   { id: "practice", label: "Practice" },
   { id: "materials", label: "Materials" },
   { id: "notes", label: "Notes" },
@@ -23,6 +25,10 @@ interface AppState {
   section: SectionId;
   vocabCategory: VocabCategory | "all";
   activeLessonId: string | null;
+  activeReadingId: string;
+  selectedReadingTokenIds: string[];
+  readingTooltipAnchorId: string | null;
+  revealedEnglishSpoilerIds: string[];
   quizQuestions: QuizQuestion[];
   currentQuestionIndex: number;
   score: number;
@@ -42,6 +48,10 @@ const state: AppState = {
   section: "dashboard",
   vocabCategory: "all",
   activeLessonId: lessons[0]?.id ?? "",
+  activeReadingId: readings[0]?.id ?? "",
+  selectedReadingTokenIds: [],
+  readingTooltipAnchorId: null,
+  revealedEnglishSpoilerIds: [],
   quizQuestions: buildQuizQuestions(vocabulary, lessons).slice(0, 18),
   currentQuestionIndex: 0,
   score: 0,
@@ -98,6 +108,8 @@ function renderSection(): string {
       return renderVocabulary();
     case "lessons":
       return renderLessons();
+    case "reading":
+      return renderReading();
     case "practice":
       return renderPractice();
     case "materials":
@@ -134,10 +146,11 @@ function renderDashboard(): string {
             <button class="icon-button" data-section="lessons" aria-label="Open lessons">${icon("arrowRight")}</button>
           </div>
           <p>${escapeHtml(nextLesson.summary)}</p>
-          ${renderSentencePair(nextLesson.sentences[0], true)}
+          ${renderSentencePair(nextLesson.sentences[0], true, `dashboard-${nextLesson.id}-0`)}
         </article>
         <aside class="panel stack-panel" aria-label="Quick actions">
           ${quickAction("vocabulary", "Review vocabulary", "Filter by pronouns, food, verbs, days, and general words.")}
+          ${quickAction("reading", "Read conversations", "Tap words from short stories and conversations to build phrase meanings.")}
           ${quickAction("practice", "Start practice", "Multiple choice and typed translation from your real lesson sentences.")}
           ${quickAction("materials", "Open materials", "Download the tutor Word documents and past-tense PDF.")}
         </aside>
@@ -236,7 +249,7 @@ function renderLessonDetail(lesson: typeof lessons[number], variant: "desktop" |
         ${lesson.source ? `<a class="button ghost" href="${materialHref(lesson.source)}">Source file</a>` : ""}
       </div>
       <p>${escapeHtml(lesson.summary)}</p>
-      ${lesson.passage ? renderPassage(lesson.passage) : ""}
+      ${lesson.passage ? renderPassage(lesson.passage, `lesson-${lesson.id}-passage`) : ""}
       <div class="rule-grid">
         ${lesson.rules
           .map(
@@ -251,7 +264,7 @@ function renderLessonDetail(lesson: typeof lessons[number], variant: "desktop" |
       </div>
       <h3 class="content-heading">Practice Sentences</h3>
       <div class="sentence-list">
-        ${lesson.sentences.map((sentence) => renderSentencePair(sentence, true)).join("")}
+        ${lesson.sentences.map((sentence, index) => renderSentencePair(sentence, true, `lesson-${lesson.id}-sentence-${index}`)).join("")}
       </div>
     </article>
   `;
@@ -265,6 +278,147 @@ function renderLessonEmptyState(): string {
       <p>Select a lesson from the list to review rules, sentences, and source material.</p>
     </article>
   `;
+}
+
+function renderReading(): string {
+  const activeReading = readings.find((reading) => reading.id === state.activeReadingId) ?? readings[0];
+
+  return `
+    <section aria-labelledby="reading-title">
+      <div class="page-heading compact-heading">
+        <p class="section-label">Reading</p>
+        <h1 id="reading-title">Stories and conversations</h1>
+        <p>Tap a Roman Punjabi word to see its meaning. Tap more words to build phrase translations, then tap the tooltip to close it.</p>
+      </div>
+      <div class="reading-layout">
+        <div class="reading-list" role="list" aria-label="Reading list">
+          ${readings.map((reading) => renderReadingListItem(reading, activeReading.id)).join("")}
+        </div>
+        ${renderReadingDetail(activeReading)}
+      </div>
+    </section>
+  `;
+}
+
+function renderReadingListItem(reading: ReadingItem, activeReadingId: string): string {
+  return `
+    <button
+      class="reading-list-item"
+      data-reading-id="${reading.id}"
+      aria-pressed="${reading.id === activeReadingId}"
+    >
+      <span>${reading.type === "conversation" ? "Conversation" : "Story"}</span>
+      <strong>${escapeHtml(reading.title)}</strong>
+      <small>${escapeHtml(reading.summary)}</small>
+    </button>
+  `;
+}
+
+function renderReadingDetail(reading: ReadingItem): string {
+  return `
+    <article class="panel reading-detail" data-reading-detail>
+      <div class="panel-title-row">
+        <div>
+          <p class="section-label">${escapeHtml(reading.level)} · ${escapeHtml(reading.source)}</p>
+          <h2>${escapeHtml(reading.title)}</h2>
+        </div>
+        <button class="listen-button" data-speak="${escapeHtml(reading.lines.map((line) => line.punjabi).join(" "))}">${icon("volume")} Listen</button>
+      </div>
+      <div class="reading-lines">
+        ${reading.lines.map((line, lineIndex) => renderReadingLine(reading, line, lineIndex)).join("")}
+      </div>
+      ${renderReadingTooltip(reading)}
+    </article>
+  `;
+}
+
+function renderReadingLine(reading: ReadingItem, line: ReadingItem["lines"][number], lineIndex: number): string {
+  return `
+    <section class="reading-line">
+      ${line.speaker ? `<p class="reading-speaker">${escapeHtml(line.speaker)}</p>` : ""}
+      <p class="reading-punjabi">${renderReadingTokens(reading, line.punjabi, lineIndex)}</p>
+      ${renderEnglishSpoiler(line.english, `${reading.id}-line-${lineIndex}`, "reading-english")}
+    </section>
+  `;
+}
+
+function renderReadingTokens(reading: ReadingItem, text: string, lineIndex: number): string {
+  const parts = text.match(/[\w+-]+|[^\w\s]+|\s+/g) ?? [];
+  let wordIndex = 0;
+
+  return parts
+    .map((part) => {
+      if (/^\s+$/.test(part)) return part;
+      if (!/[\w]/.test(part)) return `<span aria-hidden="true">${escapeHtml(part)}</span>`;
+
+      const tokenId = `${reading.id}-${lineIndex}-${wordIndex++}`;
+      const isSelected = state.selectedReadingTokenIds.includes(tokenId);
+      return `<button
+        class="reading-token"
+        data-reading-token="${tokenId}"
+        data-reading-word="${escapeHtml(part)}"
+        aria-pressed="${isSelected}"
+      >${escapeHtml(part)}</button>`;
+    })
+    .join("");
+}
+
+function renderReadingTooltip(reading: ReadingItem): string {
+  if (!state.readingTooltipAnchorId || state.selectedReadingTokenIds.length === 0) {
+    return "";
+  }
+
+  const selectedWords = getSelectedReadingWords(reading);
+  if (selectedWords.length === 0) {
+    return "";
+  }
+
+  const selectedPhrase = selectedWords.join(" ");
+  const meaning = translationForSelection(reading, selectedWords);
+
+  return `
+    <button class="reading-tooltip" data-reading-tooltip-close type="button" aria-label="Close translation tooltip">
+      <span>${escapeHtml(selectedPhrase)}</span>
+      <strong>${escapeHtml(meaning)}</strong>
+    </button>
+  `;
+}
+
+function getSelectedReadingWords(reading: ReadingItem): string[] {
+  const selectedIds = new Set(state.selectedReadingTokenIds);
+  const words: string[] = [];
+
+  reading.lines.forEach((line, lineIndex) => {
+    const parts = line.punjabi.match(/[\w+-]+|[^\w\s]+|\s+/g) ?? [];
+    let wordIndex = 0;
+
+    parts.forEach((part) => {
+      if (/[\w]/.test(part)) {
+        const tokenId = `${reading.id}-${lineIndex}-${wordIndex++}`;
+        if (selectedIds.has(tokenId)) {
+          words.push(part);
+        }
+      }
+    });
+  });
+
+  return words;
+}
+
+function translationForSelection(reading: ReadingItem, words: string[]): string {
+  const phraseKey = normaliseReadingKey(words.join(" "));
+  const phraseTranslation = reading.phraseTranslations[phraseKey];
+
+  if (phraseTranslation) {
+    return phraseTranslation;
+  }
+
+  return words
+    .map((word) => {
+      const key = normaliseReadingKey(word);
+      return reading.wordTranslations[key] ? `${word}: ${reading.wordTranslations[key]}` : `${word}: meaning not added yet`;
+    })
+    .join(" · ");
 }
 
 function renderPractice(): string {
@@ -513,29 +667,45 @@ function renderFeedback(question: QuizQuestion): string {
   `;
 }
 
-function renderSentencePair(sentence: { english: string; punjabi: string } | undefined, withListen: boolean): string {
+function renderSentencePair(sentence: { english: string; punjabi: string } | undefined, withListen: boolean, spoilerId = ""): string {
   if (!sentence) {
     return "";
   }
 
+  const resolvedSpoilerId = spoilerId || `sentence-${normaliseReadingKey(`${sentence.english}-${sentence.punjabi}`)}`;
+
   return `
     <div class="sentence-pair">
-      <p>${escapeHtml(sentence.english)}</p>
+      ${renderEnglishSpoiler(sentence.english, resolvedSpoilerId)}
       <strong>${escapeHtml(sentence.punjabi)}</strong>
       ${withListen ? `<button class="listen-button" data-speak="${escapeHtml(sentence.punjabi)}">${icon("volume")} Listen</button>` : ""}
     </div>
   `;
 }
 
-function renderPassage(passage: NonNullable<(typeof lessons)[number]["passage"]>): string {
+function renderPassage(passage: NonNullable<(typeof lessons)[number]["passage"]>, spoilerId: string): string {
   return `
     <section class="passage">
       <p class="section-label">${escapeHtml(passage.title)}</p>
-      <p>${escapeHtml(passage.english)}</p>
+      ${renderEnglishSpoiler(passage.english, spoilerId)}
       <div class="divider"></div>
       <strong>${escapeHtml(passage.punjabi)}</strong>
       <button class="listen-button" data-speak="${escapeHtml(passage.punjabi)}">${icon("volume")} Listen</button>
     </section>
+  `;
+}
+
+function renderEnglishSpoiler(text: string, spoilerId: string, extraClass = ""): string {
+  const isRevealed = state.revealedEnglishSpoilerIds.includes(spoilerId);
+  const className = `english-spoiler${isRevealed ? " revealed" : ""}${extraClass ? ` ${extraClass}` : ""}`;
+  return `
+    <button
+      class="${className}"
+      data-english-spoiler="${escapeHtml(spoilerId)}"
+      type="button"
+      aria-pressed="${isRevealed}"
+      aria-label="${isRevealed ? "Hide English translation" : "Reveal English translation"}"
+    >${escapeHtml(text)}</button>
   `;
 }
 
@@ -587,7 +757,13 @@ function bindEvents(): void {
 
   bindPracticeEvents();
   bindTranslationEvents();
+  bindReadingEvents();
+  bindEnglishSpoilers();
   bindNotesEvents();
+
+  if (state.section === "reading") {
+    requestAnimationFrame(positionReadingTooltip);
+  }
 }
 
 function focusActiveLesson(): void {
@@ -692,6 +868,60 @@ function bindTranslationEvents(): void {
   document.querySelector("[data-translation-reset]")?.addEventListener("click", resetTranslationQueue);
 }
 
+function bindReadingEvents(): void {
+  document.querySelectorAll<HTMLButtonElement>("[data-reading-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.activeReadingId = button.dataset.readingId ?? readings[0]?.id ?? "";
+      state.selectedReadingTokenIds = [];
+      state.readingTooltipAnchorId = null;
+      render();
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-reading-token]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const tokenId = button.dataset.readingToken ?? "";
+      if (!tokenId) return;
+
+      const selectedIds = new Set(state.selectedReadingTokenIds);
+      if (selectedIds.has(tokenId)) {
+        selectedIds.delete(tokenId);
+      } else {
+        selectedIds.add(tokenId);
+      }
+
+      state.selectedReadingTokenIds = [...selectedIds];
+      state.readingTooltipAnchorId = state.selectedReadingTokenIds.length > 0 ? tokenId : null;
+      render();
+    });
+  });
+
+  document.querySelector("[data-reading-tooltip-close]")?.addEventListener("click", () => {
+    state.selectedReadingTokenIds = [];
+    state.readingTooltipAnchorId = null;
+    render();
+  });
+}
+
+function bindEnglishSpoilers(): void {
+  document.querySelectorAll<HTMLButtonElement>("[data-english-spoiler]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const spoilerId = button.dataset.englishSpoiler ?? "";
+      if (!spoilerId) return;
+
+      const revealedIds = new Set(state.revealedEnglishSpoilerIds);
+      if (revealedIds.has(spoilerId)) {
+        revealedIds.delete(spoilerId);
+      } else {
+        revealedIds.add(spoilerId);
+      }
+
+      state.revealedEnglishSpoilerIds = [...revealedIds];
+      render();
+    });
+  });
+}
+
 function bindNotesEvents(): void {
   document.querySelectorAll<HTMLButtonElement>("[data-note-tab]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -753,6 +983,39 @@ function noteKey(tab: string): string {
   return `punjabi-seekho-note-${tab}`;
 }
 
+function normaliseReadingKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replaceAll("+", "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function positionReadingTooltip(): void {
+  const tooltip = document.querySelector<HTMLElement>(".reading-tooltip");
+  const anchor = state.readingTooltipAnchorId
+    ? document.querySelector<HTMLElement>(`[data-reading-token="${CSS.escape(state.readingTooltipAnchorId)}"]`)
+    : null;
+
+  if (!tooltip || !anchor) {
+    return;
+  }
+
+  const anchorRect = anchor.getBoundingClientRect();
+  const tooltipRect = tooltip.getBoundingClientRect();
+  const margin = 10;
+  const left = Math.min(
+    Math.max(anchorRect.left + anchorRect.width / 2 - tooltipRect.width / 2, margin),
+    window.innerWidth - tooltipRect.width - margin,
+  );
+  const hasRoomBelow = anchorRect.bottom + tooltipRect.height + margin < window.innerHeight;
+  const top = hasRoomBelow ? anchorRect.bottom + 8 : Math.max(margin, anchorRect.top - tooltipRect.height - 8);
+
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+  tooltip.style.visibility = "visible";
+}
+
 function byIdOrNull<T extends HTMLElement = HTMLElement>(id: string): T | null {
   return document.getElementById(id) as T | null;
 }
@@ -767,6 +1030,7 @@ function iconForSection(section: SectionId): string {
     dashboard: icon("home"),
     vocabulary: icon("book"),
     lessons: icon("layers"),
+    reading: icon("message"),
     practice: icon("target"),
     materials: icon("file"),
     notes: icon("note"),
@@ -774,11 +1038,12 @@ function iconForSection(section: SectionId): string {
   return icons[section];
 }
 
-function icon(name: "home" | "book" | "layers" | "target" | "file" | "note" | "volume" | "arrowRight" | "mic"): string {
+function icon(name: "home" | "book" | "layers" | "message" | "target" | "file" | "note" | "volume" | "arrowRight" | "mic"): string {
   const paths = {
     home: '<path d="M3 10.8 12 4l9 6.8V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
     book: '<path d="M5 4h10a4 4 0 0 1 4 4v12H8a3 3 0 0 0-3 3z"/><path d="M5 4v16a3 3 0 0 1 3-3h11"/>',
     layers: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 18 9 5 9-5"/>',
+    message: '<path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 13h5"/>',
     target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.8"/>',
     file: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>',
     note: '<path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
