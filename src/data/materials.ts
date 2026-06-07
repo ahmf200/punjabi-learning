@@ -73,6 +73,22 @@ export const materials: Material[] = [
     tags: ["past tense", "passage", "conversation"],
     summary: "A longer previous-day passage in English and Roman Punjabi for past-tense practice.",
   },
+  {
+    id: "buying-vegetables",
+    title: "Buying of Vegetables",
+    fileName: "Buying of vegetables.docx",
+    type: "docx",
+    tags: ["conversation", "shopping", "vegetables"],
+    summary: "Latest market conversation with vegetable names, prices, kilos, and availability questions.",
+  },
+  {
+    id: "june-3-2026",
+    title: "3 June 2026 Lesson",
+    fileName: "3-june-2026 -.docx",
+    type: "docx",
+    tags: ["latest", "family", "wants"],
+    summary: "Latest lesson notes for menu, meray kol, family questions, want-to phrases, and can.",
+  },
 ];
 
 export const materialHref = (fileName: string) =>
